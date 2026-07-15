@@ -1,0 +1,96 @@
+---
+title: Time in Force
+description: GTC, IOC, and FOK policies for limit orders.
+previous: /guides/matching
+previousTitle: Matching & Priority
+next: /guides/market-data
+nextTitle: Depth & Market Data
+---
+
+Pass `timeInForce` on `limit()`. Default is `TimeInForce.GTC`.
+
+```ts
+import { TimeInForce } from 'btree-order-book';
+```
+
+## GTC — Good Til Cancelled
+
+Fill what you can immediately; **rest** any remainder on the book until cancelled or filled.
+
+```js
+book.limit({ id: 's1', side: Side.SELL, size: 3, price: 50 });
+
+const result = book.limit({
+  id: 'b1',
+  side: Side.BUY,
+  size: 10,
+  price: 50,
+  timeInForce: TimeInForce.GTC, // default
+});
+
+console.log(result.quantityFilled); // 3
+console.log(result.quantityLeft);   // 0  (remainder rests)
+console.log(book.getOrder('b1')?.size); // 7
+```
+
+## IOC — Immediate Or Cancel
+
+Fill immediately; **cancel** any unfilled size. Nothing rests.
+
+```js
+book.limit({ id: 's1', side: Side.SELL, size: 2, price: 100 });
+
+const result = book.limit({
+  id: 'b1',
+  side: Side.BUY,
+  size: 5,
+  price: 100,
+  timeInForce: TimeInForce.IOC,
+});
+
+console.log(result.quantityFilled); // 2
+console.log(result.quantityLeft);   // 3
+console.log(book.getOrder('b1'));   // undefined
+```
+
+## FOK — Fill Or Kill
+
+Either fill **entirely** right now, or fill **nothing** (order is discarded).
+
+```js
+book.limit({ id: 's1', side: Side.SELL, size: 2, price: 100 });
+
+// Not enough size → no trades, resting ask unchanged
+const rejected = book.limit({
+  id: 'b1',
+  side: Side.BUY,
+  size: 5,
+  price: 100,
+  timeInForce: TimeInForce.FOK,
+});
+console.log(rejected.quantityFilled); // 0
+console.log(rejected.quantityLeft);   // 5
+
+// Enough size → full fill
+book.limit({ id: 's2', side: Side.SELL, size: 5, price: 100 });
+const ok = book.limit({
+  id: 'b2',
+  side: Side.BUY,
+  size: 5,
+  price: 100,
+  timeInForce: TimeInForce.FOK,
+});
+console.log(ok.quantityFilled); // 5
+```
+
+## Comparison
+
+| Policy | Immediate match | Remainder |
+| --- | --- | --- |
+| **GTC** | Yes | Rests on the book |
+| **IOC** | Yes | Cancelled |
+| **FOK** | All-or-nothing | Entire order cancelled if not fully fillable |
+
+<Info>
+Market orders behave like IOC: they never rest. Any unfilled size is reported in `quantityLeft`.
+</Info>

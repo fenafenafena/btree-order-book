@@ -1,0 +1,59 @@
+---
+title: Architecture
+description: How bids, asks, B-trees, and deques combine for price-time matching.
+previous: /api/errors
+previousTitle: Errors
+---
+
+## Data layout
+
+```
+OrderBook
+├── bids: OrderSide          // Side.BUY
+│     └── BTree<price, OrderQueue>   // highest price = minKey()
+│           └── Denque<Order>        // FIFO time priority
+├── asks: OrderSide          // Side.SELL
+│     └── BTree<price, OrderQueue>   // lowest price = minKey()
+│           └── Denque<Order>
+└── orders: Map<id, Order>   // O(1) cancel / getOrder
+```
+
+## Why these structures?
+
+| Structure | Package | Role | Complexity |
+| --- | --- | --- | --- |
+| Sorted B+ tree | `indexed-btree` | Ordered price levels; best price via `minKey()` | O(log n) insert / delete / best |
+| Double-ended queue | `denque` | FIFO at a price level | O(1) push / front |
+| Hash map | native `Map` | Order id → order | O(1) lookup |
+
+Bids invert the comparator so **highest** bid sits at `minKey()`, matching asks which put the **lowest** ask first. Matching always peels from `getBestQueue()`.
+
+## Matching loop (simplified)
+
+1. While taker still has size and the opposite best price is matchable:
+2. Take the front maker in that price queue.
+3. Fill `min(taker.size, maker.size)` at the **maker price**.
+4. Emit a `Trade` and optional `onTrade`.
+5. If maker is flat, pop it and drop empty price levels.
+6. After the loop: rest (GTC), discard remainder (IOC), or already handled (FOK / market).
+
+## Performance notes
+
+- Hot path avoids reallocating trees; empty price levels are deleted promptly.
+- Cancel mid-queue is O(k) in queue length (linear scan of the Denque at that price).
+- Best bid/ask and crossing checks are O(log n) / O(1) for the current best key.
+
+## Module map
+
+| File | Responsibility |
+| --- | --- |
+| `order-book.ts` | Public API, matching, validation |
+| `order-side.ts` | B-tree of price levels per side |
+| `order-queue.ts` | Denque FIFO + volume tracking |
+| `order.ts` | Mutable order + trade id helper |
+| `types.ts` | Enums and public interfaces |
+| `errors.ts` | Typed error classes |
+
+<Success>
+That is the full engine surface. Preview this site at [docs.page/preview](https://docs.page/preview), or open `https://docs.page/fenafenafena/btree-order-book` after pushing to GitHub.
+</Success>

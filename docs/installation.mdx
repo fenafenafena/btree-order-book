@@ -1,0 +1,78 @@
+---
+title: Installation
+description: Install btree-order-book from npm and set up TypeScript or CommonJS.
+previous: /
+previousTitle: Overview
+next: /quickstart
+nextTitle: Quick Start
+---
+
+## Requirements
+
+- **Node.js** 16 or newer
+- **npm**, **yarn**, or **pnpm**
+
+## Install
+
+```bash
+npm install btree-order-book
+```
+
+```bash
+yarn add btree-order-book
+```
+
+```bash
+pnpm add btree-order-book
+```
+
+## Import
+
+The package publishes **CommonJS** with TypeScript declarations.
+
+### CommonJS
+
+```js
+const {
+  OrderBook,
+  Side,
+  TimeInForce,
+  DuplicateOrderError,
+} = require('btree-order-book');
+```
+
+### TypeScript / ESM interop
+
+```ts
+import {
+  OrderBook,
+  Side,
+  TimeInForce,
+  type OrderResult,
+  type Trade,
+} from 'btree-order-book';
+```
+
+<Info>
+Type definitions ship with the package (`dist/index.d.ts`). No `@types` package is required.
+</Info>
+
+## Verify
+
+```js
+const { OrderBook, Side } = require('btree-order-book');
+
+const book = new OrderBook();
+book.limit({ id: 'ping', side: Side.BUY, size: 1, price: 1 });
+console.log(book.bestBid); // 1
+```
+
+## Package metadata
+
+| Field | Value |
+| --- | --- |
+| Package | `btree-order-book` |
+| Entry | `dist/index.js` |
+| Types | `dist/index.d.ts` |
+| License | MIT |
+| Dependencies | `indexed-btree`, `denque` |

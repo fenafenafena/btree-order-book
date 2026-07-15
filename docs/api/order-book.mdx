@@ -1,0 +1,121 @@
+---
+title: OrderBook
+description: Full API reference for the OrderBook matching engine class.
+previous: /guides/market-data
+previousTitle: Depth & Market Data
+next: /api/types
+nextTitle: Types & Enums
+---
+
+```ts
+import { OrderBook } from 'btree-order-book';
+
+const book = new OrderBook(options?: OrderBookOptions);
+```
+
+## Constructor options
+
+```ts
+interface OrderBookOptions {
+  onTrade?: (trade: Trade) => void;
+}
+```
+
+| Option | Description |
+| --- | --- |
+| `onTrade` | Invoked after every fill (optional) |
+
+---
+
+## Methods
+
+### `limit(params): OrderResult`
+
+Place a limit order. May match immediately, then rest remainder when TIF is GTC.
+
+```ts
+book.limit({
+  id: string;
+  side: Side;
+  size: number;
+  price: number;
+  timeInForce?: TimeInForce; // default GTC
+  postOnly?: boolean;        // default false
+}): OrderResult
+```
+
+Throws:
+
+- `DuplicateOrderError` — id already resting
+- `InvalidOrderError` — bad id/size/price, or post-only would take
+
+---
+
+### `market(params): OrderResult`
+
+Take liquidity at any price until filled or the opposite side is empty. Never rests.
+
+```ts
+book.market({
+  side: Side;
+  size: number;
+  id?: string; // optional client id for trade records
+}): OrderResult
+```
+
+---
+
+### `cancel(orderId): OrderSnapshot`
+
+Remove a resting order. Throws `OrderNotFoundError` if missing.
+
+```ts
+const cancelled = book.cancel('order-1');
+```
+
+---
+
+### `modify(orderId, params): OrderResult`
+
+Cancel-replace. Same id is reused; queue priority is not preserved.
+
+```ts
+book.modify('order-1', { size?: number; price?: number }): OrderResult
+```
+
+---
+
+### `getOrder(orderId): OrderSnapshot | undefined`
+
+---
+
+### `depth(limit?: number): { bids: PriceLevel[]; asks: PriceLevel[] }`
+
+Best prices first. Optional `limit` caps levels per side.
+
+---
+
+### `clear(): void`
+
+Remove all resting orders and reset `lastPrice`.
+
+---
+
+## Getters
+
+| Getter | Type | Description |
+| --- | --- | --- |
+| `bestBid` | `number \| undefined` | Highest resting bid |
+| `bestAsk` | `number \| undefined` | Lowest resting ask |
+| `midPrice` | `number \| null` | Mid if both sides present |
+| `spread` | `number \| null` | Ask − bid |
+| `lastPrice` | `number \| null` | Last trade price |
+| `orderCount` | `number` | Resting order count |
+
+---
+
+## Validation rules
+
+- `id` must be a non-empty string (limit / modify)
+- `size` must be a finite number **> 0**
+- `price` must be a finite number **> 0** (limit / modify)

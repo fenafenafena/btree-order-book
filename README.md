@@ -4,6 +4,8 @@ High-performance **limit order book** matching engine for Node.js, written in Ty
 
 Uses [`indexed-btree`](https://www.npmjs.com/package/indexed-btree) for O(log n) price levels and [`denque`](https://www.npmjs.com/package/denque) for O(1) FIFO time priority at each price.
 
+**Docs:** [docs.page/fenafenafena/btree-order-book](https://docs.page/fenafenafena/btree-order-book) · preview locally at [docs.page/preview](https://docs.page/preview)
+
 ## Features
 
 - Price-time priority matching

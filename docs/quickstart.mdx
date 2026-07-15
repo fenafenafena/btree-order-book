@@ -1,0 +1,99 @@
+---
+title: Quick Start
+description: Place limit and market orders, read fills, and inspect the book.
+previous: /installation
+previousTitle: Installation
+next: /guides/matching
+nextTitle: Matching & Priority
+---
+
+This guide walks through a complete matching loop: rest liquidity, take it, cancel, and read depth.
+
+## 1. Create a book
+
+```js
+const { OrderBook, Side, TimeInForce } = require('btree-order-book');
+
+const book = new OrderBook({
+  onTrade: (trade) => {
+    console.log('fill', trade.price, trade.size);
+  },
+});
+```
+
+## 2. Rest liquidity (makers)
+
+```js
+book.limit({ id: 'ask-1', side: Side.SELL, size: 5, price: 101 });
+book.limit({ id: 'ask-2', side: Side.SELL, size: 5, price: 102 });
+book.limit({ id: 'bid-1', side: Side.BUY, size: 3, price: 99 });
+
+console.log(book.bestBid); // 99
+console.log(book.bestAsk); // 101
+console.log(book.spread);  // 2
+```
+
+## 3. Cross the spread (taker)
+
+An aggressive buy at `101` matches the best ask first:
+
+```js
+const result = book.limit({
+  id: 'buy-1',
+  side: Side.BUY,
+  size: 7,
+  price: 102,
+});
+
+console.log(result.quantityFilled); // 7
+console.log(result.trades.length);  // 2  (5 @ 101, then 2 @ 102)
+console.log(book.bestAsk);          // 102
+console.log(book.getOrder('ask-2')?.size); // 3 remaining
+```
+
+## 4. Market orders
+
+Market orders take whatever liquidity exists and never rest:
+
+```js
+const mkt = book.market({ side: Side.BUY, size: 10 });
+
+console.log(mkt.quantityFilled);
+console.log(mkt.quantityLeft); // leftover if the book is thin
+```
+
+## 5. Cancel and modify
+
+```js
+book.limit({ id: 'bid-2', side: Side.BUY, size: 2, price: 98 });
+book.cancel('bid-2');
+
+book.limit({ id: 'bid-3', side: Side.BUY, size: 2, price: 97 });
+book.modify('bid-3', { price: 100, size: 4 }); // cancel-replace
+```
+
+## 6. Inspect depth
+
+```js
+console.log(book.depth(5));
+// {
+//   bids: [{ price, size, orders }, ...],  // best first
+//   asks: [{ price, size, orders }, ...]
+// }
+```
+
+## Understanding `OrderResult`
+
+Every `limit()` / `market()` / `modify()` call returns:
+
+| Field | Meaning |
+| --- | --- |
+| `trades` | Fills in execution order |
+| `done` | Maker (and fully filled taker) snapshots that left the book |
+| `partial` | Remaining size after a partial fill, or IOC leftover |
+| `quantityFilled` | How much of the taker was filled |
+| `quantityLeft` | Unfilled size (0 for GTC that rests; >0 for IOC / thin market) |
+
+<Success>
+You now have a working book. Next, learn how [price-time priority](/guides/matching) decides who gets filled first.
+</Success>

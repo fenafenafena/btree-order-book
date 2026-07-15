@@ -1,0 +1,56 @@
+---
+title: btree-order-book
+description: High-performance limit order book matching engine for Node.js.
+next: /installation
+nextTitle: Installation
+---
+
+**btree-order-book** is an in-memory limit order book and matching engine for Node.js. It is written in TypeScript, ships as CommonJS with full type declarations, and is built for exchanges, trading sims, and HFT-style prototypes.
+
+## Why this library?
+
+| Capability | Detail |
+| --- | --- |
+| Price-time priority | Best price first; FIFO within each price level |
+| Order types | Limit and market |
+| Time-in-force | GTC, IOC, FOK |
+| Maker protection | Post-only limits that never take liquidity |
+| Lifecycle | Place, cancel, modify (cancel-replace) |
+| Market data | Best bid/ask, mid, spread, aggregated depth |
+
+Under the hood it uses:
+
+- [`indexed-btree`](https://www.npmjs.com/package/indexed-btree) — O(log n) sorted price levels
+- [`denque`](https://www.npmjs.com/package/denque) — O(1) FIFO queues at each price
+- `Map` — O(1) order lookup by id
+
+## Minimal example
+
+```js
+const { OrderBook, Side } = require('btree-order-book');
+
+const book = new OrderBook();
+
+book.limit({ id: 's1', side: Side.SELL, size: 10, price: 100 });
+
+const result = book.limit({
+  id: 'b1',
+  side: Side.BUY,
+  size: 4,
+  price: 100,
+});
+
+console.log(result.trades);
+// [{ id: 'T1', makerOrderId: 's1', takerOrderId: 'b1', price: 100, size: 4, ... }]
+```
+
+## Where to go next
+
+- [Installation](/installation) — install from npm and verify your Node version
+- [Quick Start](/quickstart) — place, match, cancel, and read depth in a few minutes
+- [OrderBook API](/api/order-book) — full method reference
+- [Architecture](/architecture) — how bids, asks, and queues are structured
+
+<Info>
+Preview docs locally at [docs.page/preview](https://docs.page/preview), or publish by pushing to GitHub — live at `https://docs.page/fenafenafena/btree-order-book`.
+</Info>

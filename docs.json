@@ -1,0 +1,101 @@
+{
+  "$schema": "https://docs.page/schema.json",
+  "name": "btree-order-book",
+  "description": "High-performance limit order book matching engine for Node.js — price-time priority with indexed-btree and denque.",
+  "theme": {
+    "defaultTheme": "dark",
+    "primary": "#0D9488",
+    "primaryLight": "#0F766E",
+    "primaryDark": "#2DD4BF"
+  },
+  "social": {
+    "github": "fenafenafena/btree-order-book"
+  },
+  "header": {
+    "showName": true,
+    "showThemeToggle": true,
+    "showGitHubCard": true,
+    "links": [
+      {
+        "title": "npm",
+        "href": "https://www.npmjs.com/package/btree-order-book"
+      },
+      {
+        "title": "GitHub",
+        "href": "https://github.com/fenafenafena/btree-order-book"
+      }
+    ]
+  },
+  "sidebar": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        {
+          "title": "Overview",
+          "href": "/",
+          "icon": "book-open"
+        },
+        {
+          "title": "Installation",
+          "href": "/installation",
+          "icon": "download"
+        },
+        {
+          "title": "Quick Start",
+          "href": "/quickstart",
+          "icon": "rocket"
+        }
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        {
+          "title": "Matching & Priority",
+          "href": "/guides/matching",
+          "icon": "scale-balanced"
+        },
+        {
+          "title": "Time in Force",
+          "href": "/guides/time-in-force",
+          "icon": "clock"
+        },
+        {
+          "title": "Depth & Market Data",
+          "href": "/guides/market-data",
+          "icon": "chart-line"
+        }
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        {
+          "title": "OrderBook",
+          "href": "/api/order-book",
+          "icon": "cube"
+        },
+        {
+          "title": "Types & Enums",
+          "href": "/api/types",
+          "icon": "code"
+        },
+        {
+          "title": "Errors",
+          "href": "/api/errors",
+          "icon": "triangle-exclamation"
+        }
+      ]
+    },
+    {
+      "group": "Internals",
+      "pages": [
+        {
+          "title": "Architecture",
+          "href": "/architecture",
+          "icon": "diagram-project"
+        }
+      ]
+    }
+  ]
+}

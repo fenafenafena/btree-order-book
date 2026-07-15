@@ -1,0 +1,83 @@
+---
+title: Depth & Market Data
+description: Read best prices, spread, mid, last trade, and aggregated depth.
+previous: /guides/time-in-force
+previousTitle: Time in Force
+next: /api/order-book
+nextTitle: OrderBook API
+---
+
+## Top of book
+
+```js
+book.bestBid;   // number | undefined
+book.bestAsk;   // number | undefined
+book.midPrice;  // (bid + ask) / 2, or null if either side empty
+book.spread;    // ask - bid, or null
+book.lastPrice; // last trade price, or null
+book.orderCount; // resting orders
+```
+
+## Aggregated depth
+
+`depth(limit?)` returns bids and asks as price levels, **best price first**.
+
+```js
+const { bids, asks } = book.depth(10);
+
+// bids[0] === best bid
+// asks[0] === best ask
+
+bids.forEach((level) => {
+  console.log(level.price, level.size, level.orders);
+});
+```
+
+Each `PriceLevel`:
+
+| Field | Description |
+| --- | --- |
+| `price` | Level price |
+| `size` | Total remaining size at that price |
+| `orders` | Number of resting orders in the FIFO queue |
+
+## Trade callbacks
+
+Subscribe when constructing the book:
+
+```js
+const book = new OrderBook({
+  onTrade: (trade) => {
+    publish({
+      id: trade.id,
+      price: trade.price,
+      size: trade.size,
+      side: trade.side,
+      maker: trade.makerOrderId,
+      taker: trade.takerOrderId,
+      ts: trade.timestamp,
+    });
+  },
+});
+```
+
+`onTrade` fires once per fill, after the book state is updated.
+
+## Looking up a resting order
+
+```js
+const snap = book.getOrder('bid-42');
+if (snap) {
+  console.log(snap.side, snap.price, snap.size, snap.originalSize);
+}
+```
+
+## Clearing the book
+
+```js
+book.clear(); // removes all resting orders; resets lastPrice
+```
+
+<Warning>
+`clear()` is irreversible for in-memory state. Persist snapshots externally if you need recovery.
+</Warning>

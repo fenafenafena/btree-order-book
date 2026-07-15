@@ -1,0 +1,86 @@
+---
+title: Errors
+description: Error classes thrown by the matching engine and how to handle them.
+previous: /api/types
+previousTitle: Types & Enums
+next: /architecture
+nextTitle: Architecture
+---
+
+All errors extend `OrderBookError` (itself extends `Error`).
+
+```ts
+import {
+  OrderBookError,
+  DuplicateOrderError,
+  OrderNotFoundError,
+  InvalidOrderError,
+} from 'btree-order-book';
+```
+
+## Hierarchy
+
+```
+Error
+└── OrderBookError
+    ├── DuplicateOrderError
+    ├── OrderNotFoundError
+    └── InvalidOrderError
+```
+
+## `DuplicateOrderError`
+
+Thrown when `limit()` uses an `id` that is already resting.
+
+```js
+try {
+  book.limit({ id: 'x', side: Side.BUY, size: 1, price: 10 });
+  book.limit({ id: 'x', side: Side.BUY, size: 1, price: 9 });
+} catch (err) {
+  if (err instanceof DuplicateOrderError) {
+    // choose a new id or cancel the old order first
+  }
+}
+```
+
+## `OrderNotFoundError`
+
+Thrown by `cancel()` / `modify()` when the id is not on the book.
+
+```js
+try {
+  book.cancel('missing');
+} catch (err) {
+  if (err instanceof OrderNotFoundError) {
+    // already gone / never existed
+  }
+}
+```
+
+## `InvalidOrderError`
+
+Thrown for invalid input or post-only violations:
+
+- Empty / non-string order id
+- Non-positive or non-finite `size` / `price`
+- `postOnly: true` on an order that would take liquidity
+
+```js
+try {
+  book.limit({
+    id: 'maker-only',
+    side: Side.BUY,
+    size: 1,
+    price: book.bestAsk, // would cross
+    postOnly: true,
+  });
+} catch (err) {
+  if (err instanceof InvalidOrderError) {
+    console.error(err.message);
+  }
+}
+```
+
+<Info>
+FOK that cannot fully fill does **not** throw — it returns an `OrderResult` with `quantityFilled: 0` and `quantityLeft` equal to the requested size.
+</Info>

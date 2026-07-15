@@ -1,0 +1,134 @@
+---
+title: Types & Enums
+description: Exported enums and TypeScript interfaces for orders, trades, and results.
+previous: /api/order-book
+previousTitle: OrderBook
+next: /api/errors
+nextTitle: Errors
+---
+
+## Enums
+
+### `Side`
+
+```ts
+enum Side {
+  BUY = 'buy',
+  SELL = 'sell',
+}
+```
+
+### `OrderType`
+
+```ts
+enum OrderType {
+  LIMIT = 'limit',
+  MARKET = 'market',
+}
+```
+
+### `TimeInForce`
+
+```ts
+enum TimeInForce {
+  GTC = 'GTC',
+  IOC = 'IOC',
+  FOK = 'FOK',
+}
+```
+
+---
+
+## Interfaces
+
+### `Trade`
+
+A single fill produced by the matcher.
+
+```ts
+interface Trade {
+  id: string;
+  takerOrderId: string;
+  makerOrderId: string;
+  price: number;
+  size: number;
+  side: Side;       // taker's side
+  timestamp: number; // Date.now() at fill
+}
+```
+
+### `OrderSnapshot`
+
+Immutable view of an order (resting, filled, or cancelled).
+
+```ts
+interface OrderSnapshot {
+  id: string;
+  side: Side;
+  price: number;
+  size: number;          // remaining
+  originalSize: number;
+  timeInForce: TimeInForce;
+  timestamp: number;
+}
+```
+
+### `OrderResult`
+
+Returned by `limit`, `market`, and `modify`.
+
+```ts
+interface OrderResult {
+  done: OrderSnapshot[];
+  partial: OrderSnapshot | null;
+  quantityFilled: number;
+  quantityLeft: number;
+  trades: Trade[];
+}
+```
+
+### `PriceLevel`
+
+```ts
+interface PriceLevel {
+  price: number;
+  size: number;
+  orders: number;
+}
+```
+
+### Input params
+
+```ts
+interface CreateLimitOrderParams {
+  id: string;
+  side: Side;
+  size: number;
+  price: number;
+  timeInForce?: TimeInForce;
+  postOnly?: boolean;
+}
+
+interface CreateMarketOrderParams {
+  side: Side;
+  size: number;
+  id?: string;
+}
+
+interface ModifyOrderParams {
+  size?: number;
+  price?: number;
+}
+```
+
+---
+
+## Other exports
+
+Advanced / internal building blocks are also exported if you need them:
+
+| Export | Role |
+| --- | --- |
+| `Order` | Mutable resting order object |
+| `OrderQueue` | Denque-backed FIFO at one price |
+| `OrderSide` | B-tree of price → queue for one side |

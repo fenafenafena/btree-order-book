@@ -1,0 +1,76 @@
+---
+title: Matching & Priority
+description: How price-time priority decides which resting orders get filled first.
+previous: /quickstart
+previousTitle: Quick Start
+next: /guides/time-in-force
+nextTitle: Time in Force
+---
+
+The matcher follows classic **price-time priority**: better prices trade first; at the same price, earlier orders trade first (FIFO).
+
+## Price priority
+
+| Side | Best price | Walk direction |
+| --- | --- | --- |
+| Asks (sell) | Lowest ask | Ascending |
+| Bids (buy) | Highest bid | Descending |
+
+A buy takes asks from cheapest upward. A sell takes bids from highest downward.
+
+```js
+book.limit({ id: 's1', side: Side.SELL, size: 2, price: 101 });
+book.limit({ id: 's2', side: Side.SELL, size: 2, price: 100 });
+
+const result = book.limit({
+  id: 'b1',
+  side: Side.BUY,
+  size: 2,
+  price: 101,
+});
+
+// Trades s2 first @ 100 (better ask), not s1 @ 101
+console.log(result.trades[0].makerOrderId); // 's2'
+console.log(result.trades[0].price);       // 100
+```
+
+## Time priority
+
+Orders at the **same price** form a FIFO queue. Earlier arrivals fill before later ones.
+
+```js
+book.limit({ id: 's-early', side: Side.SELL, size: 1, price: 100 });
+book.limit({ id: 's-late', side: Side.SELL, size: 1, price: 100 });
+
+book.limit({ id: 'buy', side: Side.BUY, size: 1, price: 100 });
+// Matches s-early first
+```
+
+## Trade price
+
+Fills execute at the **maker's** resting price (passive price improvement for the taker when they are more aggressive).
+
+## Post-only
+
+Set `postOnly: true` so a limit order is rejected instead of taking liquidity:
+
+```js
+book.limit({ id: 's1', side: Side.SELL, size: 1, price: 100 });
+
+book.limit({
+  id: 'b1',
+  side: Side.BUY,
+  size: 1,
+  price: 100,
+  postOnly: true,
+});
+// throws InvalidOrderError — would cross the spread
+```
+
+## Modify and time priority
+
+`modify()` is **cancel-replace**. The order loses its place in the queue when re-inserted, even if only size changed.
+
+<Warning>
+Increasing size or changing price always goes to the back of the new price level. There is no “amend in place” that preserves priority.
+</Warning>
