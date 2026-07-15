@@ -1,6 +1,6 @@
 {
   "name": "btree-order-book",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "High-performance limit order book matching engine for Node.js. Uses btree for price levels and denque for time-priority queues.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
