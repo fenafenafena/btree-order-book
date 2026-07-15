@@ -1,0 +1,61 @@
+{
+  "name": "btree-order-book",
+  "version": "1.0.1",
+  "description": "High-performance limit order book matching engine for Node.js. Uses btree for price levels and denque for time-priority queues.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts.map",
+    "!dist/**/*.test.*",
+    "!dist/bench.*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm test",
+    "test": "npm run build && node --test dist/**/*.test.js",
+    "bench": "npm run build && node dist/bench.js"
+  },
+  "keywords": [
+    "limit-order-book",
+    "order-book",
+    "matching-engine",
+    "trading",
+    "exchange",
+    "hft",
+    "orderbook"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "denque": "^2.1.0",
+    "indexed-btree": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fenafenafena/btree-order-book.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fenafenafena/btree-order-book/issues"
+  },
+  "homepage": "https://github.com/fenafenafena/btree-order-book#readme"
+}
