@@ -9,6 +9,7 @@ Uses [`indexed-btree`](https://www.npmjs.com/package/indexed-btree) for O(log n)
 ## Features
 
 - Price-time priority matching
+- Signed and zero prices (spread / calendar books)
 - Limit and market orders
 - Time-in-force: `GTC`, `IOC`, `FOK`
 - Post-only limit orders

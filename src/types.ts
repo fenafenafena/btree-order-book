@@ -26,6 +26,7 @@ export interface CreateLimitOrderParams {
   id: string;
   side: Side;
   size: number;
+  /** Finite price; zero and negatives are allowed. */
   price: number;
   timeInForce?: TimeInForce;
   postOnly?: boolean;

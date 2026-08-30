@@ -18,6 +18,8 @@ The matcher follows classic **price-time priority**: better prices trade first; 
 
 A buy takes asks from cheapest upward. A sell takes bids from highest downward.
 
+Prices may be **zero or negative**. Numeric order is unchanged: a more negative ask is a better ask; a less negative (higher) bid is a better bid. That covers spread, calendar, and other signed books.
+
 ```js
 book.limit({ id: 's1', side: Side.SELL, size: 2, price: 101 });
 book.limit({ id: 's2', side: Side.SELL, size: 2, price: 100 });
