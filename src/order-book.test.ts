@@ -206,4 +206,141 @@ describe('OrderBook', () => {
     book.market({ side: Side.BUY, size: 3 });
     assert.deepEqual(trades, ['s1:3']);
   });
+
+  it('rests and matches at negative prices', () => {
+    book.limit({ id: 's1', side: Side.SELL, size: 4, price: -10 });
+    assert.equal(book.bestAsk, -10);
+
+    const result = book.limit({
+      id: 'b1',
+      side: Side.BUY,
+      size: 4,
+      price: -10,
+    });
+
+    assert.equal(result.quantityFilled, 4);
+    assert.equal(result.trades[0].price, -10);
+    assert.equal(book.orderCount, 0);
+    assert.equal(book.lastPrice, -10);
+  });
+
+  it('respects price-time priority across negative levels', () => {
+    book.limit({ id: 's1', side: Side.SELL, size: 2, price: -5 });
+    book.limit({ id: 's2', side: Side.SELL, size: 2, price: -10 });
+    book.limit({ id: 's3', side: Side.SELL, size: 2, price: -10 });
+
+    const result = book.limit({
+      id: 'b1',
+      side: Side.BUY,
+      size: 5,
+      price: -5,
+    });
+
+    assert.equal(result.trades.length, 3);
+    assert.equal(result.trades[0].makerOrderId, 's2');
+    assert.equal(result.trades[0].price, -10);
+    assert.equal(result.trades[1].makerOrderId, 's3');
+    assert.equal(result.trades[2].makerOrderId, 's1');
+    assert.equal(result.trades[2].price, -5);
+    assert.equal(result.quantityFilled, 5);
+    assert.equal(book.getOrder('s1')?.size, 1);
+  });
+
+  it('allows zero as a valid price', () => {
+    book.limit({ id: 's1', side: Side.SELL, size: 2, price: 0 });
+    assert.equal(book.bestAsk, 0);
+
+    const result = book.limit({
+      id: 'b1',
+      side: Side.BUY,
+      size: 2,
+      price: 0,
+    });
+
+    assert.equal(result.quantityFilled, 2);
+    assert.equal(result.trades[0].price, 0);
+  });
+
+  it('matches across negative, zero, and positive prices', () => {
+    book.limit({ id: 's-neg', side: Side.SELL, size: 1, price: -2 });
+    book.limit({ id: 's-zero', side: Side.SELL, size: 1, price: 0 });
+    book.limit({ id: 's-pos', side: Side.SELL, size: 1, price: 3 });
+
+    const result = book.limit({
+      id: 'b1',
+      side: Side.BUY,
+      size: 3,
+      price: 3,
+    });
+
+    assert.deepEqual(
+      result.trades.map((t) => [t.makerOrderId, t.price]),
+      [
+        ['s-neg', -2],
+        ['s-zero', 0],
+        ['s-pos', 3],
+      ],
+    );
+    assert.equal(book.orderCount, 0);
+  });
+
+  it('returns depth best-first for negative bids and asks', () => {
+    book.limit({ id: 'b1', side: Side.BUY, size: 1, price: -8 });
+    book.limit({ id: 'b2', side: Side.BUY, size: 2, price: -3 });
+    book.limit({ id: 's1', side: Side.SELL, size: 3, price: -1 });
+    book.limit({ id: 's2', side: Side.SELL, size: 4, price: 2 });
+
+    const depth = book.depth();
+    assert.deepEqual(depth.bids.map((l) => l.price), [-3, -8]);
+    assert.deepEqual(depth.asks.map((l) => l.price), [-1, 2]);
+    assert.equal(book.spread, 2);
+    assert.equal(book.midPrice, -2);
+  });
+
+  it('fills a market buy against negative asks', () => {
+    book.limit({ id: 's1', side: Side.SELL, size: 2, price: -4 });
+    book.limit({ id: 's2', side: Side.SELL, size: 2, price: -1 });
+
+    const result = book.market({ side: Side.BUY, size: 3 });
+
+    assert.equal(result.quantityFilled, 3);
+    assert.equal(result.trades[0].price, -4);
+    assert.equal(result.trades[1].price, -1);
+    assert.equal(book.getOrder('s2')?.size, 1);
+  });
+
+  it('modifies a resting order onto a negative price', () => {
+    book.limit({ id: 'b1', side: Side.BUY, size: 5, price: 1 });
+    book.modify('b1', { price: -7 });
+
+    assert.equal(book.bestBid, -7);
+    assert.equal(book.getOrder('b1')?.price, -7);
+  });
+
+  it('rejects non-finite prices', () => {
+    assert.throws(
+      () => book.limit({ id: 'b1', side: Side.BUY, size: 1, price: NaN }),
+      InvalidOrderError,
+    );
+    assert.throws(
+      () =>
+        book.limit({
+          id: 'b2',
+          side: Side.BUY,
+          size: 1,
+          price: Number.POSITIVE_INFINITY,
+        }),
+      InvalidOrderError,
+    );
+    assert.throws(
+      () =>
+        book.limit({
+          id: 'b3',
+          side: Side.BUY,
+          size: 1,
+          price: Number.NEGATIVE_INFINITY,
+        }),
+      InvalidOrderError,
+    );
+  });
 });

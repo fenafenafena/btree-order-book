@@ -352,7 +352,7 @@ export class OrderBook {
   }
 
   private validatePrice(price: number): void {
-    if (typeof price !== 'number' || !(price > 0) || !Number.isFinite(price)) {
+    if (typeof price !== 'number' || !Number.isFinite(price)) {
       throw new InvalidOrderError(`Invalid price: ${price}`);
     }
   }
